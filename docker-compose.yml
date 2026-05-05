@@ -1,0 +1,47 @@
+services:
+  seed-postgres:
+    image: postgres:16
+    container_name: seed-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: seed
+      POSTGRES_PASSWORD: ${SEED_DB_PASSWORD}
+      POSTGRES_DB: seed
+    volumes:
+      - seed-pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - seed-net
+
+  seed-qdrant:
+    image: qdrant/qdrant:latest
+    container_name: seed-qdrant
+    restart: unless-stopped
+    volumes:
+      - seed-qdrant-data:/qdrant/storage
+    ports:
+      - "6333:6333"
+    networks:
+      - seed-net
+
+  seed-scraper:
+    build: ./scraper
+    container_name: seed-scraper
+    restart: unless-stopped
+    environment:
+      SEED_API_URL: "https://api.seed.wiki"
+    ports:
+      - "3000:3000"
+    volumes:
+      - "D:/Seed/scraper/data:/app/data"
+    networks:
+      - seed-net
+
+volumes:
+  seed-pgdata:
+  seed-qdrant-data:
+
+networks:
+  seed-net:
+    name: seed-net

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed — Capture</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#0f0f0f;color:#e0e0e0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px}
+a{color:#60a5fa}
+
+.container{width:100%;max-width:720px}
+
+/* Header */
+.hdr{text-align:center;margin-bottom:32px}
+.hdr h1{font-size:28px;font-weight:700;margin-bottom:4px}
+.hdr h1 span{color:#4ade80}
+.hdr p{font-size:13px;color:#888}
+
+/* Stats bar */
+.stats-bar{display:flex;justify-content:center;gap:24px;margin-bottom:24px;font-size:11px;color:#666}
+.stats-bar .stat{display:flex;align-items:center;gap:4px}
+.stats-bar .stat b{color:#888}
+
+/* Input modes */
+.mode-tabs{display:flex;gap:4px;margin-bottom:12px}
+.mode-tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:600;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px 8px 0 0;color:#888;cursor:pointer;transition:all .15s}
+.mode-tab.on{background:#222;border-bottom-color:#222;color:#e0e0e0}
+
+.input-area{background:#222;border:1px solid #2a2a2a;border-top:none;border-radius:0 0 8px 8px;padding:16px;margin-bottom:16px}
+
+input[type="text"],input[type="url"],textarea{width:100%;padding:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#e0e0e0;font-size:14px;font-family:inherit;outline:none;transition:border .15s}
+input:focus,textarea:focus{border-color:#4ade80}
+textarea{resize:vertical;min-height:100px}
+
+.url-row{display:flex;gap:8px}
+.url-row input{flex:1}
+
+/* Buttons */
+.btn{padding:12px 24px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-green{background:#16a34a;color:#fff}
+.btn-green:hover{background:#15803d}
+.btn-green:disabled{background:#333;color:#666;cursor:not-allowed}
+.btn-outline{background:transparent;border:1px solid #333;color:#aaa}
+.btn-outline:hover{border-color:#666;color:#e0e0e0}
+.btn-sm{padding:6px 14px;font-size:12px;border-radius:6px}
+.btn-red{background:transparent;border:1px solid #dc2626;color:#dc2626}
+.btn-red:hover{background:#dc2626;color:#fff}
+
+/* Status */
+.status{text-align:center;padding:12px;font-size:13px;color:#888;display:none}
+.status.show{display:block}
+.status.ok{color:#4ade80}
+.status.err{color:#f87171}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #444;border-top-color:#4ade80;border-radius:50%;animation:spin .6s linear infinite;margin-right:6px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Results */
+.result{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:16px;margin-bottom:16px;display:none}
+.result.show{display:block}
+.result-meta{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;font-size:11px;color:#888}
+.result-meta .badge{padding:3px 8px;background:#222;border:1px solid #333;border-radius:4px;font-family:monospace}
+.result-title{font-size:16px;font-weight:600;margin-bottom:8px;color:#e0e0e0}
+.result-preview{font-size:13px;color:#aaa;line-height:1.6;max-height:200px;overflow-y:auto;padding:12px;background:#111;border-radius:6px;border:1px solid #222;font-family:monospace;white-space:pre-wrap;margin-bottom:12px}
+.result-src{font-size:11px;color:#666;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Tags */
+.tag-section{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:16px;margin-bottom:16px;display:none}
+.tag-section.show{display:block}
+.sec-label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.tg{padding:5px 12px;border:1px solid #333;border-radius:16px;font-size:12px;color:#aaa;background:#222;cursor:pointer;transition:all .15s}
+.tg:hover{border-color:#555;color:#ddd}
+.tg.on{background:#2a3a4a;border-color:#354a5f;color:#e0e0e0;font-weight:600}
+.add-row{display:flex;gap:5px}
+.add-row input{flex:1;padding:8px 10px;font-size:12px}
+.domain-ind{font-size:12px;color:#888;margin-bottom:12px}
+.domain-ind b{color:#4ade80}
+.dests{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.dt{padding:5px 12px;border:1px solid #333;border-radius:16px;font-size:12px;color:#aaa;background:#222;cursor:pointer;transition:all .15s}
+.dt:hover{border-color:#555}
+.dt.on{background:#2a3a4a;border-color:#354a5f;color:#e0e0e0;font-weight:600}
+textarea.note{min-height:60px;margin-bottom:12px;font-size:12px}
+.save-row{display:flex;gap:8px;align-items:center}
+.save-row label{font-size:11px;color:#888;display:flex;align-items:center;gap:4px;cursor:pointer}
+
+/* Footer */
+.footer{text-align:center;margin-top:32px;font-size:11px;color:#444}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="hdr">
+    <h1><span>🌱</span> Seed</h1>
+    <p>The sovereign source from which everything grows</p>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat">Requests: <b id="st-reqs">0</b></div>
+    <div class="stat">Saved: <b id="st-saved">0</b></div>
+    <div class="stat">Since: <b id="st-since">—</b></div>
+  </div>
+
+  <div class="mode-tabs">
+    <div class="mode-tab on" data-mode="url" onclick="setMode('url')">Scrape URL</div>
+    <div class="mode-tab" data-mode="paste" onclick="setMode('paste')">Paste Text</div>
+  </div>
+
+  <div class="input-area">
+    <div id="mode-url">
+      <div class="url-row">
+        <input type="url" id="inp-url" placeholder="https://forums.developer.nvidia.com/t/..." autocomplete="off">
+        <button class="btn btn-green" id="btn-scrape" onclick="doScrape()">Scrape</button>
+      </div>
+    </div>
+    <div id="mode-paste" style="display:none">
+      <textarea id="inp-text" placeholder="Paste content here..."></textarea>
+      <div style="margin-top:8px">
+        <input type="url" id="inp-paste-url" placeholder="Source URL (optional)" style="font-size:12px">
+      </div>
+      <div style="margin-top:8px;text-align:right">
+        <button class="btn btn-green" onclick="doPaste()">Capture</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="result" id="result">
+    <div class="result-meta">
+      <span class="badge" id="r-path">—</span>
+      <span class="badge" id="r-len">—</span>
+      <span class="badge" id="r-time">—</span>
+    </div>
+    <div class="result-title" id="r-title"></div>
+    <div class="result-preview" id="r-preview"></div>
+    <div class="result-src" id="r-src"></div>
+  </div>
+
+  <div class="tag-section" id="tag-section">
+    <div class="sec-label">Project</div>
+    <select id="sel-project" style="width:100%;padding:8px;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#e0e0e0;font-size:13px;margin-bottom:12px">
+      <option value="">Select project...</option>
+    </select>
+
+    <div class="sec-label">Tags</div>
+    <div class="tags" id="tags"></div>
+    <div class="add-row" style="margin-bottom:12px">
+      <input type="text" id="inp-newtag" placeholder="+ custom tag" style="font-size:12px">
+      <button class="btn btn-outline btn-sm" onclick="addTag()">Add</button>
+    </div>
+
+    <div class="domain-ind" id="domain-ind" style="display:none">→ <b id="domain-name">seed</b>/raw/</div>
+
+    <div class="sec-label">Destination</div>
+    <div class="dests" id="dests"></div>
+
+    <div class="sec-label">Note</div>
+    <textarea class="note" id="inp-note" placeholder="Add a note — what is this? why does it matter?"></textarea>
+
+    <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+      <button class="btn btn-green" id="btn-save" onclick="doSave()" disabled style="flex:1;font-size:15px;padding:14px">Save</button>
+      <button class="btn btn-outline btn-sm" onclick="clearResult()">Clear</button>
+    </div>
+
+    <div id="save-confirm" style="display:none;margin-top:12px;padding:14px;background:#1a2e1a;border:1px solid #2d5a2d;border-radius:8px">
+      <div style="font-size:13px;color:#4ade80;font-weight:600;margin-bottom:6px" id="confirm-msg"></div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="text" id="confirm-url" readonly style="flex:1;font-size:11px;font-family:monospace;padding:8px;background:#111;border:1px solid #333;border-radius:6px;color:#aaa">
+        <button class="btn btn-outline btn-sm" onclick="copyUrl()" id="btn-copy-url">Copy URL</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    seed.wiki — sovereign knowledge capture
+  </div>
+</div>
+
+<script>
+const API = window.location.origin;
+let scrapeResult = null;
+let activeTags = [];
+let activeDests = [];
+let stats = {reqs:0, saved:0, since: new Date().toLocaleDateString()};
+
+const TAGS = ["hardware","nvidia","models","orchestration","cluster","infrastructure","architecture",
+  "trading","methodology","gemini","lab-pipe","BVC","decision-router",
+  "governance","trust-protocol","data-schema","brain-evolution",
+  "debugging","build-log","handoff","blueprint","conversation","personal","reference"];
+
+const DESTS = ["wiki","rag","folder","todo","email","calendar","crm","reference","archive"];
+
+const TAG_DOMAIN = {
+  "hardware":"hardware","nvidia":"hardware","cluster":"hardware","gb10":"hardware","infrastructure":"hardware",
+  "trading":"trading","FOMC-edge":"trading","BVC":"trading","lab-pipe":"trading",
+  "architecture":"seed","data-schema":"seed","trust-protocol":"seed","brain-evolution":"seed",
+  "models":"models","gemini":"models","orchestration":"models",
+  "debugging":"anthropic-ops","build-log":"anthropic-ops"
+};
+
+// Load stats from localStorage
+try {
+  const s = JSON.parse(localStorage.getItem("seed_stats")||"{}");
+  if(s.reqs) stats = s;
+} catch(e){}
+updateStats();
+
+// Load projects
+loadProjects();
+renderTags();
+renderDests();
+
+// Mode switching
+function setMode(m){
+  document.querySelectorAll(".mode-tab").forEach(t=>t.classList.toggle("on",t.dataset.mode===m));
+  document.getElementById("mode-url").style.display = m==="url"?"block":"none";
+  document.getElementById("mode-paste").style.display = m==="paste"?"block":"none";
+}
+
+// Status
+function showStatus(msg,type){
+  const el = document.getElementById("status");
+  el.className = "status show"+(type?" "+type:"");
+  el.innerHTML = msg;
+}
+function hideStatus(){document.getElementById("status").className="status"}
+
+// Scrape
+async function doScrape(){
+  const url = document.getElementById("inp-url").value.trim();
+  if(!url){showStatus("Enter a URL","err");return}
+
+  document.getElementById("btn-scrape").disabled = true;
+  showStatus('<span class="spinner"></span>Scraping...','');
+  stats.reqs++;
+  saveStats();
+
+  try {
+    const r = await fetch(API+"/api/scrape",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({url:url, post_to_seed:false})
+    });
+    const d = await r.json();
+
+    if(d.ok){
+      scrapeResult = {
+        text: d.context.selected_text,
+        title: d.context.source_title||"",
+        url: d.context.source_uri||url,
+        path: d.context.source_external?.path_taken||"unknown",
+        length: d.context.selected_text?.length||0,
+        duration: d.context.source_external?.scrape_duration_ms||0
+      };
+      showResult();
+      hideStatus();
+    } else {
+      showStatus("Scrape failed: "+(d.error||"unknown error"),"err");
+      scrapeResult = null;
+    }
+  } catch(e){
+    showStatus("Error: "+e.message,"err");
+    scrapeResult = null;
+  }
+  document.getElementById("btn-scrape").disabled = false;
+}
+
+// Paste
+function doPaste(){
+  const text = document.getElementById("inp-text").value.trim();
+  if(!text){showStatus("Paste some text first","err");return}
+  const url = document.getElementById("inp-paste-url").value.trim();
+
+  scrapeResult = {
+    text: text,
+    title: "",
+    url: url||"manual paste",
+    path: "paste",
+    length: text.length,
+    duration: 0
+  };
+  showResult();
+  hideStatus();
+  stats.reqs++;
+  saveStats();
+}
+
+// Show result
+function showResult(){
+  if(!scrapeResult) return;
+  const el = document.getElementById("result");
+  document.getElementById("r-path").textContent = scrapeResult.path;
+  document.getElementById("r-len").textContent = scrapeResult.length.toLocaleString()+" chars";
+  document.getElementById("r-time").textContent = scrapeResult.duration?scrapeResult.duration+"ms":"—";
+  document.getElementById("r-title").textContent = scrapeResult.title||"Untitled";
+  document.getElementById("r-preview").textContent = scrapeResult.text.slice(0,1000)+(scrapeResult.text.length>1000?"...":"");
+  document.getElementById("r-src").textContent = scrapeResult.url;
+  el.className = "result show";
+  document.getElementById("tag-section").className = "tag-section show";
+  checkSave();
+}
+
+function clearResult(){
+  scrapeResult = null;
+  activeTags = [];
+  activeDests = [];
+  document.getElementById("result").className = "result";
+  document.getElementById("tag-section").className = "tag-section";
+  document.getElementById("inp-note").value = "";
+  document.getElementById("save-confirm").style.display = "none";
+  renderTags();
+  renderDests();
+  hideStatus();
+}
+
+// Tags
+function renderTags(){
+  document.getElementById("tags").innerHTML = TAGS.map(t=>
+    `<span class="tg${activeTags.includes(t)?" on":""}" onclick="toggleTag('${t}')">${t}</span>`
+  ).join("");
+  updateDomain();
+}
+
+function toggleTag(t){
+  if(activeTags.includes(t)) activeTags=activeTags.filter(x=>x!==t);
+  else activeTags.push(t);
+  renderTags();
+  checkSave();
+}
+
+function addTag(){
+  const inp = document.getElementById("inp-newtag");
+  const t = inp.value.trim().toLowerCase().replace(/\s+/g,"-");
+  if(t&&!TAGS.includes(t)){TAGS.push(t);inp.value="";renderTags()}
+}
+
+// Destinations
+function renderDests(){
+  document.getElementById("dests").innerHTML = DESTS.map(d=>
+    `<span class="dt${activeDests.includes(d)?" on":""}" onclick="toggleDest('${d}')">→ ${d}</span>`
+  ).join("");
+}
+
+function toggleDest(d){
+  if(activeDests.includes(d)) activeDests=activeDests.filter(x=>x!==d);
+  else activeDests.push(d);
+  renderDests();
+  checkSave();
+}
+
+// Domain detection
+function updateDomain(){
+  const el = document.getElementById("domain-ind");
+  if(!activeTags.length){el.style.display="none";return}
+  const counts = {};
+  activeTags.forEach(t=>{const d=TAG_DOMAIN[t];if(d)counts[d]=(counts[d]||0)+1});
+  const entries = Object.entries(counts);
+  const domain = entries.length?entries.sort((a,b)=>b[1]-a[1])[0][0]:"seed";
+  document.getElementById("domain-name").textContent = domain;
+  el.style.display = "block";
+}
+
+// Save checks
+function checkSave(){
+  const proj = document.getElementById("sel-project").value;
+  const note = document.getElementById("inp-note").value.trim();
+  const hasDest = activeDests.length > 0;
+  const hasContent = !!scrapeResult;
+  const hasTitle = !!(scrapeResult && scrapeResult.title);
+  const hasLabel = hasTitle || !!note;
+  const goesToDB = activeDests.some(d => d !== "folder");
+  const folderOnly = activeDests.length > 0 && activeDests.every(d => d === "folder");
+
+  // Must have content + at least one destination
+  if(!hasContent || !hasDest){
+    document.getElementById("btn-save").disabled = true;
+    return;
+  }
+  // DB destinations require a project
+  if(goesToDB && !proj){
+    document.getElementById("btn-save").disabled = true;
+    return;
+  }
+  // Must have a label (title from scrape OR note)
+  if(!hasLabel){
+    document.getElementById("btn-save").disabled = true;
+    return;
+  }
+  document.getElementById("btn-save").disabled = false;
+}
+
+// Listen for note changes
+document.getElementById("inp-note").addEventListener("input", checkSave);
+
+// Hash helper
+async function hashText(text){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+// Copy URL helper
+function copyUrl(){
+  const inp = document.getElementById("confirm-url");
+  inp.select();
+  navigator.clipboard.writeText(inp.value).then(()=>{
+    document.getElementById("btn-copy-url").textContent = "Copied!";
+    setTimeout(()=>{document.getElementById("btn-copy-url").textContent = "Copy URL"},2000);
+  });
+}
+
+// === SINGLE SAVE — routes by destination ===
+async function doSave(){
+  if(!scrapeResult) return;
+  const proj = document.getElementById("sel-project").value;
+  const note = document.getElementById("inp-note").value.trim();
+  const goesToFolder = activeDests.includes("folder");
+  const goesToWiki = activeDests.includes("wiki");
+  const goesToDB = activeDests.some(d => d !== "folder");
+  const hasTitle = !!(scrapeResult.title);
+  const label = scrapeResult.title || note || "Untitled";
+
+  if(!activeDests.length){showStatus("Select at least one destination","err");return}
+  if(goesToDB && !proj){showStatus("Select a project — required for this destination","err");return}
+  if(!hasTitle && !note){showStatus("Add a note — no title available to name this","err");document.getElementById("inp-note").focus();return}
+
+  const btn = document.getElementById("btn-save");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+  showStatus('<span class="spinner"></span>Saving...','');
+
+  const hash = await hashText(scrapeResult.text);
+  const title = scrapeResult.title || note || "Untitled";
+  let contextId = null;
+  let savedParts = [];
+
+  try {
+    // Save to DB (for any destination except folder-only)
+    if(goesToDB){
+      const payload = {
+        project_id: proj,
+        source_kind: "web",
+        source_uri: scrapeResult.url||"",
+        source_title: title,
+        source_span_start: 0,
+        source_span_end: scrapeResult.text.length,
+        selected_text: scrapeResult.text,
+        content_hash: hash,
+        captured_at: new Date().toISOString(),
+        source_external: {
+          platform: "seed_capture_page",
+          capture_mode: scrapeResult.path,
+          destinations: [...activeDests]
+        },
+        tags: [...activeTags],
+        user_note: note,
+        destination: [...activeDests]
+      };
+
+      const r = await fetch(API+"/api/contexts",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(payload)
+      });
+      const d = await r.json();
+
+      if(r.ok){
+        contextId = d.id;
+        savedParts.push("DB");
+
+        // If wiki destination, publish to vault
+        if(goesToWiki && contextId){
+          try {
+            await fetch(API+"/api/contexts/"+contextId+"/publish",{
+              method:"POST",
+              headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({})
+            });
+            savedParts.push("vault");
+          } catch(e){
+            console.warn("Vault publish failed:",e);
+          }
+        }
+      } else {
+        showStatus("Save failed: "+(d.detail||"unknown"),"err");
+        btn.disabled = false;
+        btn.textContent = "Save";
+        return;
+      }
+    }
+
+    // Save to folder
+    if(goesToFolder){
+      const slug = (note||title).toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,50).replace(/(^-|-$)/g,"");
+      const date = new Date().toISOString().slice(0,10);
+      const filename = date+"-"+slug+".md";
+
+      const frontmatter = [
+        "---",
+        "source_url: "+(scrapeResult.url||""),
+        "title: "+title,
+        "captured_at: "+new Date().toISOString(),
+        "capture_method: "+scrapeResult.path,
+        "tags: ["+activeTags.join(", ")+"]",
+        note ? "note: "+note : "",
+        "---",
+        "",
+        "# "+title,
+        "",
+        scrapeResult.text
+      ].filter(Boolean).join("\n");
+
+      try {
+        const r = await fetch(API+"/api/save-to-folder",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({filename: filename, content: frontmatter})
+        });
+        if(r.ok){
+          savedParts.push("folder");
+        }
+      } catch(e){
+        console.warn("Folder save failed:",e);
+      }
+    }
+
+    // Success
+    stats.saved++;
+    saveStats();
+
+    const confirmMsg = "Saved to: "+savedParts.join(" + ");
+    document.getElementById("confirm-msg").textContent = confirmMsg;
+
+    if(contextId){
+      const url = API+"/api/contexts/"+contextId;
+      document.getElementById("confirm-url").value = url;
+      document.getElementById("save-confirm").style.display = "block";
+    } else {
+      document.getElementById("save-confirm").style.display = "none";
+    }
+
+    hideStatus();
+    btn.textContent = "Saved ✓";
+    setTimeout(()=>{
+      btn.textContent = "Save";
+      btn.disabled = false;
+    },3000);
+
+  } catch(e){
+    showStatus("Error: "+e.message,"err");
+    btn.disabled = false;
+    btn.textContent = "Save";
+  }
+}
+
+// Projects
+async function loadProjects(){
+  try {
+    const r = await fetch(API+"/api/projects");
+    const data = await r.json();
+    const list = Array.isArray(data)?data:data.items||[];
+    const sel = document.getElementById("sel-project");
+    list.forEach(p=>{
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name+" ("+p.slug+")";
+      sel.appendChild(opt);
+    });
+    sel.addEventListener("change",checkSave);
+    // Also update checkSave when project changes
+  } catch(e){
+    console.warn("Could not load projects:",e);
+  }
+}
+
+// Stats
+function saveStats(){
+  localStorage.setItem("seed_stats",JSON.stringify(stats));
+  updateStats();
+}
+
+function updateStats(){
+  document.getElementById("st-reqs").textContent = stats.reqs;
+  document.getElementById("st-saved").textContent = stats.saved;
+  document.getElementById("st-since").textContent = stats.since;
+}
+
+// Enter key on URL input
+document.getElementById("inp-url").addEventListener("keydown",e=>{
+  if(e.key==="Enter") doScrape();
+});
+
+document.getElementById("inp-newtag").addEventListener("keydown",e=>{
+  if(e.key==="Enter") addTag();
+});
+</script>
+</body>
+</html>

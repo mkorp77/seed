@@ -35,3 +35,21 @@ vault/.trash/
 # Temporary
 *.tmp
 *.bak
+
+# Claude Code local settings
+.claude/
+
+# Local instruction files (lived in D:\Source-Shared\ originally)
+backend/CODE-*.md
+
+# Iteration scratch (already absorbed into source)
+backend/book2/
+
+# Diagnostic / one-off PowerShell scripts
+backend/test-*.ps1
+scraper/test-*.ps1
+scraper/check-size.ps1
+scraper/verify-encoding.ps1
+
+# Standalone scraper compose file (not used; root docker-compose.yml is canonical)
+scraper/docker-compose.yml
