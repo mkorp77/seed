@@ -346,6 +346,10 @@ class SeedKnowledgeNode(Base):
     body_md_hash: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
     git_path: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
     status: Mapped[str] = mapped_column(sa.Text, nullable=False, server_default=text("'draft'"))
+    domain: Mapped[str] = mapped_column(sa.Text, nullable=False, server_default=text("'seed'"))
+    summary_500: Mapped[str] = mapped_column(sa.Text, nullable=False, server_default=text("''"))
+    published_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    last_verified_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         sa.DateTime(timezone=True), nullable=False, server_default=text("now()")
     )
@@ -404,6 +408,36 @@ class SeedContextNodeLink(Base):
     @validates("relation_type")
     def validate_relation_type(self, _: str, value: str) -> str:
         return _validate_in(value, RELATION_TYPES, "SeedContextNodeLink.relation_type")
+
+
+class SeedApiKey(Base):
+    __tablename__ = "seed_api_keys"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    name: Mapped[str] = mapped_column(sa.Text, nullable=False)
+    key_prefix: Mapped[str] = mapped_column(sa.Text, nullable=False, unique=True, index=True)
+    key_hash: Mapped[str] = mapped_column(sa.Text, nullable=False)
+    role: Mapped[str] = mapped_column(sa.Text, nullable=False, index=True)
+    domains: Mapped[list[str]] = mapped_column(
+        ARRAY(sa.Text), nullable=False, server_default=text("'{}'::text[]")
+    )
+    project_ids: Mapped[list[uuid.UUID] | None] = mapped_column(
+        ARRAY(UUID(as_uuid=True)), nullable=True
+    )
+    permissions: Mapped[list[str]] = mapped_column(
+        ARRAY(sa.Text), nullable=False, server_default=text("'{read}'::text[]")
+    )
+    format: Mapped[str] = mapped_column(sa.Text, nullable=False, server_default=text("'plain'"))
+    active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=text("true"))
+    created_at: Mapped[datetime] = mapped_column(
+        sa.DateTime(timezone=True), nullable=False, server_default=text("now()")
+    )
+    last_used_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(sa.DateTime(timezone=True), nullable=True)
+    notes: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
 
 
 # -----------------------------------------------------------------------------

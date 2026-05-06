@@ -4,7 +4,6 @@ import ipaddress
 import os
 import re
 import uuid
-from collections.abc import Generator
 from urllib.parse import urlparse
 
 import httpx
@@ -13,8 +12,13 @@ from fastapi.responses import FileResponse, HTMLResponse
 from sqlalchemy.orm import Session, sessionmaker
 
 import seed_crud as crud
+from seed_auth import router as auth_router
+from seed_brain import router as brain_router
+from seed_deps import get_db
 from seed_domain import detect_domain, parse_tags_param
+from seed_nodes import router as nodes_router
 from seed_publish import ContextNotFoundError, VaultPublishError, publish_context_to_vault
+from seed_search import router as search_router
 from seed_schemas import (
     ContextCreate,
     ContextListItem,
@@ -39,22 +43,6 @@ router = APIRouter(prefix="/api", tags=["seed"])
 # Example:
 #   engine = sa.create_engine(DB_URL, future=True)
 #   app = create_app(sessionmaker(bind=engine, autoflush=False, autocommit=False))
-
-
-def get_db(request: Request) -> Generator[Session, None, None]:
-    session_factory: sessionmaker | None = getattr(request.app.state, "session_factory", None)
-    if session_factory is None:
-        raise RuntimeError("app.state.session_factory is not configured")
-
-    db = session_factory()
-    try:
-        yield db
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise
-    finally:
-        db.close()
 
 
 @router.post("/projects", response_model=ProjectRead, status_code=status.HTTP_201_CREATED)
@@ -229,6 +217,12 @@ async def save_to_folder(request: Request):
         f.write(content)
     return {"path": filepath, "size": len(content)}
 
+
+
+router.include_router(auth_router)
+router.include_router(brain_router)
+router.include_router(search_router)
+router.include_router(nodes_router)
 
 
 def create_app(session_factory: sessionmaker[Session]) -> FastAPI:
