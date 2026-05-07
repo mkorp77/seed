@@ -14,10 +14,13 @@ from sqlalchemy.orm import Session, sessionmaker
 import seed_crud as crud
 from seed_auth import router as auth_router
 from seed_brain import router as brain_router
+from seed_collab import router as collab_router
+from seed_compare import router as compare_router
 from seed_deps import get_db
 from seed_domain import detect_domain, parse_tags_param
 from seed_nodes import router as nodes_router
 from seed_publish import ContextNotFoundError, VaultPublishError, publish_context_to_vault
+from seed_router import router as model_router
 from seed_search import router as search_router
 from seed_schemas import (
     ContextCreate,
@@ -223,6 +226,9 @@ router.include_router(auth_router)
 router.include_router(brain_router)
 router.include_router(search_router)
 router.include_router(nodes_router)
+router.include_router(model_router)
+router.include_router(compare_router)
+router.include_router(collab_router)
 
 
 def create_app(session_factory: sessionmaker[Session]) -> FastAPI:
